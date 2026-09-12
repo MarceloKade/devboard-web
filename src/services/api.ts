@@ -4,10 +4,15 @@ export async function api<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
+  const accessToken = localStorage.getItem('accessToken')
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(accessToken && {
+        Authorization: `Bearer ${accessToken}`,
+      }),
       ...options.headers,
     },
   })
