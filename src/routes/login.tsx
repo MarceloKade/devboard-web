@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 
 import { api } from '../services/api'
+import { setAccessToken } from '../services/auth.service'
 
 export const Route = createFileRoute('/login')({
   component: Login,
@@ -34,7 +35,7 @@ function Login() {
         }),
       })
 
-      localStorage.setItem('accessToken', data.accessToken)
+      setAccessToken(data.accessToken)
 
       navigate({ to: '/dashboard' })
     } catch (error) {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 import { api } from '../services/api'
+import { isAuthenticated, removeAccessToken } from '../services/auth.service'
 
 export const Route = createFileRoute('/dashboard')({
   component: Dashboard,
@@ -21,6 +22,11 @@ function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate({ to: '/login' })
+      return
+    }
+
     async function loadUser() {
       try {
         const data = await api<User>('/users/me')
@@ -36,10 +42,10 @@ function Dashboard() {
     }
 
     loadUser()
-  }, [])
+  }, [navigate])
 
   function handleLogout() {
-    localStorage.removeItem('accessToken')
+    removeAccessToken()
 
     navigate({ to: '/login' })
   }
