@@ -14,8 +14,17 @@ export type CreateProjectData = {
   description?: string
 }
 
+export type UpdateProjectData = {
+  name?: string
+  description?: string
+}
+
 export async function getProjects(): Promise<Project[]> {
   return api<Project[]>('/projects')
+}
+
+export async function getProject(id: string): Promise<Project> {
+  return api<Project>(`/projects/${id}`)
 }
 
 export async function createProject(data: CreateProjectData): Promise<Project> {
@@ -25,6 +34,18 @@ export async function createProject(data: CreateProjectData): Promise<Project> {
   })
 }
 
-export async function getProject(id: string): Promise<Project> {
-  return api<Project>(`/projects/${id}`)
+export async function updateProject(
+  id: string,
+  data: UpdateProjectData,
+): Promise<Project> {
+  return api<Project>(`/projects/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteProject(id: string): Promise<Project> {
+  return api<Project>(`/projects/${id}`, {
+    method: 'DELETE',
+  })
 }
