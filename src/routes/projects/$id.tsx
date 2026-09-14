@@ -8,6 +8,15 @@ import {
   updateProject,
   type Project,
 } from '../../services/projects.service'
+import {
+  createTask,
+  deleteTask,
+  getTasks,
+  updateTask,
+  type Task,
+  type TaskPriority,
+  type TaskStatus,
+} from '../../services/tasks.service'
 
 export const Route = createFileRoute('/projects/$id')({
   component: ProjectDetails,
@@ -18,6 +27,7 @@ function ProjectDetails() {
   const { id } = Route.useParams()
 
   const [project, setProject] = useState<Project | null>(null)
+  const [tasks, setTasks] = useState<Task[]>([])
   const [projectName, setProjectName] = useState('')
   const [projectDescription, setProjectDescription] = useState('')
   const [error, setError] = useState('')
@@ -27,6 +37,17 @@ function ProjectDetails() {
   const [updating, setUpdating] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  const [showTaskModal, setShowTaskModal] = useState(false)
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+  const [taskTitle, setTaskTitle] = useState('')
+  const [taskDescription, setTaskDescription] = useState('')
+  const [taskStatus, setTaskStatus] = useState<TaskStatus>('TODO')
+  const [taskPriority, setTaskPriority] = useState<TaskPriority>('MEDIUM')
+  const [taskError, setTaskError] = useState('')
+  const [creatingTask, setCreatingTask] = useState(false)
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
+  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
+
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate({ to: '/login' })
@@ -35,11 +56,15 @@ function ProjectDetails() {
 
     async function loadProject() {
       try {
-        const data = await getProject(id)
+        const [projectData, tasksData] = await Promise.all([
+          getProject(id),
+          getTasks(id),
+        ])
 
-        setProject(data)
-        setProjectName(data.name)
-        setProjectDescription(data.description ?? '')
+        setProject(projectData)
+        setTasks(tasksData)
+        setProjectName(projectData.name)
+        setProjectDescription(projectData.description ?? '')
       } catch (error) {
         setError(
           error instanceof Error
@@ -131,6 +156,200 @@ function ProjectDetails() {
     }
   }
 
+  function handleOpenCreateTaskModal() {
+    setEditingTaskId(null)
+    setTaskTitle('')
+    setTaskDescription('')
+    setTaskStatus('TODO')
+    setTaskPriority('MEDIUM')
+    setTaskError('')
+    setShowTaskModal(true)
+  }
+
+  function handleOpenEditTaskModal(task: Task) {
+    setEditingTaskId(task.id)
+    setTaskTitle(task.title)
+    setTaskDescription(task.description ?? '')
+    setTaskStatus(task.status)
+    setTaskPriority(task.priority)
+    setTaskError('')
+    setShowTaskModal(true)
+  }
+
+  function handleCloseTaskModal() {
+    if (creatingTask || deletingTaskId) {
+      return
+    }
+
+    setShowTaskModal(false)
+    setEditingTaskId(null)
+    setTaskTitle('')
+    setTaskDescription('')
+    setTaskStatus('TODO')
+    setTaskPriority('MEDIUM')
+    setTaskError('')
+  }
+
+  async function handleSaveTask(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    setTaskError('')
+
+    if (!taskTitle.trim()) {
+      setTaskError('Informe o título da tarefa.')
+      return
+    }
+
+    try {
+      setCreatingTask(true)
+
+      if (editingTaskId) {
+        const updatedTask = await updateTask(id, editingTaskId, {
+          title: taskTitle.trim(),
+          description: taskDescription.trim() || undefined,
+          status: taskStatus,
+          priority: taskPriority,
+        })
+
+        setTasks((currentTasks) =>
+          currentTasks.map((task) =>
+            task.id === updatedTask.id ? updatedTask : task,
+          ),
+        )
+      } else {
+        const task = await createTask(id, {
+          title: taskTitle.trim(),
+          description: taskDescription.trim() || undefined,
+          status: taskStatus,
+          priority: taskPriority,
+        })
+
+        setTasks((currentTasks) => [task, ...currentTasks])
+      }
+
+      handleCloseTaskModal()
+    } catch (error) {
+      setTaskError(
+        error instanceof Error
+          ? error.message
+          : editingTaskId
+            ? 'Erro ao atualizar a tarefa.'
+            : 'Erro ao criar a tarefa.',
+      )
+    } finally {
+      setCreatingTask(false)
+    }
+  }
+
+  async function handleDeleteTask(taskId: string) {
+    const confirmed = window.confirm(
+      'Tem certeza que deseja excluir esta tarefa?',
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setDeletingTaskId(taskId)
+      setTaskError('')
+
+      await deleteTask(id, taskId)
+
+      setTasks((currentTasks) =>
+        currentTasks.filter((task) => task.id !== taskId),
+      )
+
+      setShowTaskModal(false)
+      setEditingTaskId(null)
+      setTaskTitle('')
+      setTaskDescription('')
+      setTaskStatus('TODO')
+      setTaskPriority('MEDIUM')
+    } catch (error) {
+      setTaskError(
+        error instanceof Error ? error.message : 'Erro ao excluir a tarefa.',
+      )
+    } finally {
+      setDeletingTaskId(null)
+    }
+  }
+
+  function handleDragStart(taskId: string) {
+    setDraggingTaskId(taskId)
+  }
+
+  function handleDragEnd() {
+    setDraggingTaskId(null)
+  }
+
+  async function handleDrop(status: TaskStatus) {
+    if (!draggingTaskId) {
+      return
+    }
+
+    const task = tasks.find((currentTask) => currentTask.id === draggingTaskId)
+
+    if (!task) {
+      setDraggingTaskId(null)
+      return
+    }
+
+    if (task.status === status) {
+      setDraggingTaskId(null)
+      return
+    }
+
+    try {
+      setTaskError('')
+
+      const updatedTask = await updateTask(id, task.id, {
+        status,
+      })
+
+      setTasks((currentTasks) =>
+        currentTasks.map((currentTask) =>
+          currentTask.id === updatedTask.id ? updatedTask : currentTask,
+        ),
+      )
+    } catch (error) {
+      setTaskError(
+        error instanceof Error
+          ? error.message
+          : 'Erro ao atualizar o status da tarefa.',
+      )
+    } finally {
+      setDraggingTaskId(null)
+    }
+  }
+
+  function renderTask(task: Task) {
+    return (
+      <article
+        key={task.id}
+        draggable
+        onDragStart={() => handleDragStart(task.id)}
+        onDragEnd={handleDragEnd}
+        onClick={() => handleOpenEditTaskModal(task)}
+        className={`cursor-grab rounded-lg border border-gray-800 bg-gray-900 p-4 transition hover:border-gray-600 hover:bg-gray-800 active:cursor-grabbing ${
+          draggingTaskId === task.id ? 'opacity-50' : ''
+        }`}
+      >
+        <h4 className="font-semibold">{task.title}</h4>
+
+        {task.description && (
+          <p className="mt-1 text-sm text-gray-400">{task.description}</p>
+        )}
+
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-xs text-gray-500">{task.priority}</span>
+
+          <span className="text-xs text-gray-600">Clique para abrir</span>
+        </div>
+      </article>
+    )
+  }
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-950 text-white">
@@ -165,7 +384,7 @@ function ProjectDetails() {
 
   return (
     <main className="min-h-screen bg-gray-950 px-6 py-10 text-white">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-6xl">
         <button
           type="button"
           onClick={() => navigate({ to: '/dashboard' })}
@@ -288,7 +507,254 @@ function ProjectDetails() {
             </>
           )}
         </section>
+
+        {!editing && (
+          <section className="mt-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Tarefas</h2>
+
+              <button
+                type="button"
+                onClick={handleOpenCreateTaskModal}
+                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-950 transition hover:bg-gray-200"
+              >
+                Nova tarefa
+              </button>
+            </div>
+
+            {taskError && (
+              <p className="mt-4 text-sm text-red-400">{taskError}</p>
+            )}
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+              <div
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={() => handleDrop('TODO')}
+                className="min-h-64 rounded-lg border border-gray-800 bg-gray-950 p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">TODO</h3>
+
+                  <span className="text-xs text-gray-500">
+                    {tasks.filter((task) => task.status === 'TODO').length}
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {tasks
+                    .filter((task) => task.status === 'TODO')
+                    .map(renderTask)}
+                </div>
+              </div>
+
+              <div
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={() => handleDrop('IN_PROGRESS')}
+                className="min-h-64 rounded-lg border border-gray-800 bg-gray-950 p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">IN_PROGRESS</h3>
+
+                  <span className="text-xs text-gray-500">
+                    {
+                      tasks.filter((task) => task.status === 'IN_PROGRESS')
+                        .length
+                    }
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {tasks
+                    .filter((task) => task.status === 'IN_PROGRESS')
+                    .map(renderTask)}
+                </div>
+              </div>
+
+              <div
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={() => handleDrop('DONE')}
+                className="min-h-64 rounded-lg border border-gray-800 bg-gray-950 p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">DONE</h3>
+
+                  <span className="text-xs text-gray-500">
+                    {tasks.filter((task) => task.status === 'DONE').length}
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {tasks
+                    .filter((task) => task.status === 'DONE')
+                    .map(renderTask)}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
+
+      {showTaskModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              handleCloseTaskModal()
+            }
+          }}
+        >
+          <div className="w-full max-w-lg rounded-lg border border-gray-800 bg-gray-900 p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">
+                {editingTaskId ? 'Editar tarefa' : 'Nova tarefa'}
+              </h2>
+
+              <button
+                type="button"
+                onClick={handleCloseTaskModal}
+                disabled={creatingTask || !!deletingTaskId}
+                className="text-2xl leading-none text-gray-500 transition hover:text-white disabled:cursor-not-allowed"
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTask} className="mt-6 space-y-4">
+              <div>
+                <label
+                  htmlFor="task-title"
+                  className="mb-2 block text-sm font-medium text-gray-300"
+                >
+                  Título
+                </label>
+
+                <input
+                  id="task-title"
+                  type="text"
+                  value={taskTitle}
+                  onChange={(event) => setTaskTitle(event.target.value)}
+                  placeholder="Título da tarefa"
+                  autoFocus
+                  disabled={!!deletingTaskId}
+                  className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="task-description"
+                  className="mb-2 block text-sm font-medium text-gray-300"
+                >
+                  Descrição
+                </label>
+
+                <textarea
+                  id="task-description"
+                  value={taskDescription}
+                  onChange={(event) => setTaskDescription(event.target.value)}
+                  placeholder="Descrição da tarefa"
+                  rows={4}
+                  disabled={!!deletingTaskId}
+                  className="w-full resize-none border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="task-status"
+                    className="mb-2 block text-sm font-medium text-gray-300"
+                  >
+                    Status
+                  </label>
+
+                  <select
+                    id="task-status"
+                    value={taskStatus}
+                    onChange={(event) =>
+                      setTaskStatus(event.target.value as TaskStatus)
+                    }
+                    disabled={!!deletingTaskId}
+                    className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="TODO">TODO</option>
+                    <option value="IN_PROGRESS">IN_PROGRESS</option>
+                    <option value="DONE">DONE</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="task-priority"
+                    className="mb-2 block text-sm font-medium text-gray-300"
+                  >
+                    Prioridade
+                  </label>
+
+                  <select
+                    id="task-priority"
+                    value={taskPriority}
+                    onChange={(event) =>
+                      setTaskPriority(event.target.value as TaskPriority)
+                    }
+                    disabled={!!deletingTaskId}
+                    className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="LOW">LOW</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HIGH">HIGH</option>
+                  </select>
+                </div>
+              </div>
+
+              {taskError && <p className="text-sm text-red-400">{taskError}</p>}
+
+              <div className="flex items-center justify-between gap-3">
+                {editingTaskId ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteTask(editingTaskId)}
+                    disabled={creatingTask || !!deletingTaskId}
+                    className="rounded-lg border border-red-900 px-4 py-3 text-sm font-medium text-red-400 transition hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {deletingTaskId === editingTaskId
+                      ? 'Excluindo...'
+                      : 'Excluir tarefa'}
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCloseTaskModal}
+                    disabled={creatingTask || !!deletingTaskId}
+                    className="rounded-lg border border-gray-700 px-4 py-3 text-sm font-medium transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={creatingTask || !!deletingTaskId}
+                    className="rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-950 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {creatingTask
+                      ? editingTaskId
+                        ? 'Salvando...'
+                        : 'Criando...'
+                      : editingTaskId
+                        ? 'Salvar alterações'
+                        : 'Criar tarefa'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
