@@ -24,3 +24,7 @@ export async function createProject(data: CreateProjectData): Promise<Project> {
     body: JSON.stringify(data),
   })
 }
+
+export async function getProject(id: string): Promise<Project> {
+  return api<Project>(`/projects/${id}`)
+}

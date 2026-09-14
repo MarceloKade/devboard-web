@@ -30,6 +30,7 @@ function Dashboard() {
   const [projectError, setProjectError] = useState('')
   const [loading, setLoading] = useState(true)
   const [creatingProject, setCreatingProject] = useState(false)
+  const [showProjectModal, setShowProjectModal] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -82,6 +83,7 @@ function Dashboard() {
 
       setProjectName('')
       setProjectDescription('')
+      setShowProjectModal(false)
     } catch (error) {
       setProjectError(
         error instanceof Error ? error.message : 'Erro ao criar o projeto.',
@@ -89,6 +91,17 @@ function Dashboard() {
     } finally {
       setCreatingProject(false)
     }
+  }
+
+  function handleCloseProjectModal() {
+    if (creatingProject) {
+      return
+    }
+
+    setShowProjectModal(false)
+    setProjectError('')
+    setProjectName('')
+    setProjectDescription('')
   }
 
   function handleLogout() {
@@ -146,58 +159,54 @@ function Dashboard() {
           </button>
         </header>
 
-        <section className="mt-8 rounded-lg border border-gray-800 bg-gray-900 p-6">
-          <h2 className="text-xl font-semibold">Novo projeto</h2>
-
-          <form onSubmit={handleCreateProject} className="mt-4 space-y-4">
-            <div>
-              <label
-                htmlFor="project-name"
-                className="mb-2 block text-sm font-medium text-gray-300"
-              >
-                Nome
-              </label>
-
-              <input
-                id="project-name"
-                type="text"
-                value={projectName}
-                onChange={(event) => setProjectName(event.target.value)}
-                placeholder="Nome do projeto"
-                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="project-description"
-                className="mb-2 block text-sm font-medium text-gray-300"
-              >
-                Descrição
-              </label>
-
-              <textarea
-                id="project-description"
-                value={projectDescription}
-                onChange={(event) => setProjectDescription(event.target.value)}
-                placeholder="Descrição do projeto"
-                rows={3}
-                className="w-full resize-none rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500"
-              />
-            </div>
-
-            {projectError && (
-              <p className="text-sm text-red-400">{projectError}</p>
-            )}
+        <section className="mt-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Projetos</h2>
 
             <button
-              type="submit"
-              disabled={creatingProject}
-              className="rounded-lg bg-white px-4 py-3 font-medium text-gray-950 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
+              onClick={() => setShowProjectModal(true)}
+              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-950 transition hover:bg-gray-200"
             >
-              {creatingProject ? 'Criando...' : 'Criar projeto'}
+              Novo Projeto
             </button>
-          </form>
+          </div>
+
+          {projects.length === 0 ? (
+            <div className="mt-4 rounded-lg border border-gray-800 bg-gray-900 p-6">
+              <p className="text-gray-400">
+                Você ainda não possui nenhum projeto.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {projects.map((project) => (
+                <article
+                  key={project.id}
+                  onClick={() =>
+                    navigate({
+                      to: '/projects/$id',
+                      params: { id: project.id },
+                    })
+                  }
+                  className="cursor-pointer rounded-lg border border-gray-800 bg-gray-900 p-6 transition hover:border-gray-600 hover:bg-gray-800"
+                >
+                  <h3 className="text-lg font-semibold">{project.name}</h3>
+
+                  {project.description && (
+                    <p className="mt-2 text-sm text-gray-400">
+                      {project.description}
+                    </p>
+                  )}
+
+                  <p className="mt-4 text-xs text-gray-600">
+                    Criado em{' '}
+                    {new Date(project.createdAt).toLocaleDateString('pt-BR')}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="mt-8 rounded-lg border border-gray-800 bg-gray-900 p-6">
@@ -218,41 +227,98 @@ function Dashboard() {
             </p>
           </div>
         </section>
-
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold">Projetos</h2>
-
-          {projects.length === 0 ? (
-            <div className="mt-4 rounded-lg border border-gray-800 bg-gray-900 p-6">
-              <p className="text-gray-400">
-                Você ainda não possui nenhum projeto.
-              </p>
-            </div>
-          ) : (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {projects.map((project) => (
-                <article
-                  key={project.id}
-                  className="rounded-lg border border-gray-800 bg-gray-900 p-6"
-                >
-                  <h3 className="text-lg font-semibold">{project.name}</h3>
-
-                  {project.description && (
-                    <p className="mt-2 text-sm text-gray-400">
-                      {project.description}
-                    </p>
-                  )}
-
-                  <p className="mt-4 text-xs text-gray-600">
-                    Criado em{' '}
-                    {new Date(project.createdAt).toLocaleDateString('pt-BR')}
-                  </p>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
       </div>
+
+      {showProjectModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              handleCloseProjectModal()
+            }
+          }}
+        >
+          <div className="w-full max-w-lg rounded-lg border border-gray-800 bg-gray-900 p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Novo Projeto</h2>
+
+              <button
+                type="button"
+                onClick={handleCloseProjectModal}
+                disabled={creatingProject}
+                className="text-2xl leading-none text-gray-500 transition hover:text-white disabled:cursor-not-allowed"
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateProject} className="mt-6 space-y-4">
+              <div>
+                <label
+                  htmlFor="project-name"
+                  className="mb-2 block text-sm font-medium text-gray-300"
+                >
+                  Nome
+                </label>
+
+                <input
+                  id="project-name"
+                  type="text"
+                  value={projectName}
+                  onChange={(event) => setProjectName(event.target.value)}
+                  placeholder="Nome do projeto"
+                  autoFocus
+                  className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="project-description"
+                  className="mb-2 block text-sm font-medium text-gray-300"
+                >
+                  Descrição
+                </label>
+
+                <textarea
+                  id="project-description"
+                  value={projectDescription}
+                  onChange={(event) =>
+                    setProjectDescription(event.target.value)
+                  }
+                  placeholder="Descrição do projeto"
+                  rows={4}
+                  className="w-full resize-none rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500"
+                />
+              </div>
+
+              {projectError && (
+                <p className="text-sm text-red-400">{projectError}</p>
+              )}
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleCloseProjectModal}
+                  disabled={creatingProject}
+                  className="rounded-lg border border-gray-700 px-4 py-3 text-sm font-medium transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={creatingProject}
+                  className="rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-950 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {creatingProject ? 'Criando...' : 'Criar projeto'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
