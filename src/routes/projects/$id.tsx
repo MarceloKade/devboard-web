@@ -17,6 +17,14 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from '../../services/tasks.service'
+import {
+  addProjectMember,
+  deleteProjectMember,
+  getProjectMembers,
+  updateProjectMember,
+  type ProjectMember,
+  type ProjectMemberRole,
+} from '../../services/project-members.service'
 
 export const Route = createFileRoute('/projects/$id')({
   component: ProjectDetails,
@@ -28,6 +36,7 @@ function ProjectDetails() {
 
   const [project, setProject] = useState<Project | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
+  const [members, setMembers] = useState<ProjectMember[]>([])
   const [projectName, setProjectName] = useState('')
   const [projectDescription, setProjectDescription] = useState('')
   const [error, setError] = useState('')
@@ -48,6 +57,14 @@ function ProjectDetails() {
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
 
+  const [showMemberModal, setShowMemberModal] = useState(false)
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
+  const [memberUserId, setMemberUserId] = useState('')
+  const [memberRole, setMemberRole] = useState<ProjectMemberRole>('MEMBER')
+  const [memberError, setMemberError] = useState('')
+  const [savingMember, setSavingMember] = useState(false)
+  const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null)
+
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate({ to: '/login' })
@@ -56,13 +73,15 @@ function ProjectDetails() {
 
     async function loadProject() {
       try {
-        const [projectData, tasksData] = await Promise.all([
+        const [projectData, tasksData, membersData] = await Promise.all([
           getProject(id),
           getTasks(id),
+          getProjectMembers(id),
         ])
 
         setProject(projectData)
         setTasks(tasksData)
+        setMembers(membersData)
         setProjectName(projectData.name)
         setProjectDescription(projectData.description ?? '')
       } catch (error) {
@@ -350,6 +369,112 @@ function ProjectDetails() {
     )
   }
 
+  function handleOpenCreateMemberModal() {
+    setEditingMemberId(null)
+    setMemberUserId('')
+    setMemberRole('MEMBER')
+    setMemberError('')
+    setShowMemberModal(true)
+  }
+
+  function handleOpenEditMemberModal(member: ProjectMember) {
+    setEditingMemberId(member.id)
+    setMemberUserId(member.userId)
+    setMemberRole(member.role)
+    setMemberError('')
+    setShowMemberModal(true)
+  }
+
+  function handleCloseMemberModal() {
+    if (savingMember || deletingMemberId) {
+      return
+    }
+
+    setShowMemberModal(false)
+    setEditingMemberId(null)
+    setMemberUserId('')
+    setMemberRole('MEMBER')
+    setMemberError('')
+  }
+
+  async function handleSaveMember(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    setMemberError('')
+
+    if (!editingMemberId && !memberUserId.trim()) {
+      setMemberError('Informe o ID do usuário.')
+      return
+    }
+
+    try {
+      setSavingMember(true)
+
+      if (editingMemberId) {
+        const updatedMember = await updateProjectMember(id, editingMemberId, {
+          role: memberRole,
+        })
+
+        setMembers((currentMembers) =>
+          currentMembers.map((member) =>
+            member.id === updatedMember.id ? updatedMember : member,
+          ),
+        )
+      } else {
+        const member = await addProjectMember(id, {
+          userId: memberUserId.trim(),
+          role: memberRole,
+        })
+
+        setMembers((currentMembers) => [...currentMembers, member])
+      }
+
+      handleCloseMemberModal()
+    } catch (error) {
+      setMemberError(
+        error instanceof Error
+          ? error.message
+          : editingMemberId
+            ? 'Erro ao atualizar o membro.'
+            : 'Erro ao adicionar o membro.',
+      )
+    } finally {
+      setSavingMember(false)
+    }
+  }
+
+  async function handleDeleteMember(memberId: string) {
+    const confirmed = window.confirm(
+      'Tem certeza que deseja remover este membro do projeto?',
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setDeletingMemberId(memberId)
+      setMemberError('')
+
+      await deleteProjectMember(id, memberId)
+
+      setMembers((currentMembers) =>
+        currentMembers.filter((member) => member.id !== memberId),
+      )
+
+      setShowMemberModal(false)
+      setEditingMemberId(null)
+      setMemberUserId('')
+      setMemberRole('MEMBER')
+    } catch (error) {
+      setMemberError(
+        error instanceof Error ? error.message : 'Erro ao remover o membro.',
+      )
+    } finally {
+      setDeletingMemberId(null)
+    }
+  }
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-950 text-white">
@@ -509,88 +634,139 @@ function ProjectDetails() {
         </section>
 
         {!editing && (
-          <section className="mt-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Tarefas</h2>
+          <>
+            <section className="mt-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Tarefas</h2>
 
-              <button
-                type="button"
-                onClick={handleOpenCreateTaskModal}
-                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-950 transition hover:bg-gray-200"
-              >
-                Nova tarefa
-              </button>
-            </div>
-
-            {taskError && (
-              <p className="mt-4 text-sm text-red-400">{taskError}</p>
-            )}
-
-            <div className="mt-4 grid gap-4 lg:grid-cols-3">
-              <div
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => handleDrop('TODO')}
-                className="min-h-64 rounded-lg border border-gray-800 bg-gray-950 p-4"
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">TODO</h3>
-
-                  <span className="text-xs text-gray-500">
-                    {tasks.filter((task) => task.status === 'TODO').length}
-                  </span>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  {tasks
-                    .filter((task) => task.status === 'TODO')
-                    .map(renderTask)}
-                </div>
+                <button
+                  type="button"
+                  onClick={handleOpenCreateTaskModal}
+                  className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-950 transition hover:bg-gray-200"
+                >
+                  Nova tarefa
+                </button>
               </div>
 
-              <div
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => handleDrop('IN_PROGRESS')}
-                className="min-h-64 rounded-lg border border-gray-800 bg-gray-950 p-4"
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">IN_PROGRESS</h3>
+              {taskError && (
+                <p className="mt-4 text-sm text-red-400">{taskError}</p>
+              )}
 
-                  <span className="text-xs text-gray-500">
-                    {
-                      tasks.filter((task) => task.status === 'IN_PROGRESS')
-                        .length
-                    }
-                  </span>
+              <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                <div
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => handleDrop('TODO')}
+                  className="min-h-64 rounded-lg border border-gray-800 bg-gray-950 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">TODO</h3>
+
+                    <span className="text-xs text-gray-500">
+                      {tasks.filter((task) => task.status === 'TODO').length}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {tasks
+                      .filter((task) => task.status === 'TODO')
+                      .map(renderTask)}
+                  </div>
                 </div>
 
-                <div className="mt-4 space-y-3">
-                  {tasks
-                    .filter((task) => task.status === 'IN_PROGRESS')
-                    .map(renderTask)}
+                <div
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => handleDrop('IN_PROGRESS')}
+                  className="min-h-64 rounded-lg border border-gray-800 bg-gray-950 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">IN_PROGRESS</h3>
+
+                    <span className="text-xs text-gray-500">
+                      {
+                        tasks.filter((task) => task.status === 'IN_PROGRESS')
+                          .length
+                      }
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {tasks
+                      .filter((task) => task.status === 'IN_PROGRESS')
+                      .map(renderTask)}
+                  </div>
+                </div>
+
+                <div
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => handleDrop('DONE')}
+                  className="min-h-64 rounded-lg border border-gray-800 bg-gray-950 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">DONE</h3>
+
+                    <span className="text-xs text-gray-500">
+                      {tasks.filter((task) => task.status === 'DONE').length}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {tasks
+                      .filter((task) => task.status === 'DONE')
+                      .map(renderTask)}
+                  </div>
                 </div>
               </div>
+            </section>
 
-              <div
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => handleDrop('DONE')}
-                className="min-h-64 rounded-lg border border-gray-800 bg-gray-950 p-4"
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">DONE</h3>
+            <section className="mt-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Membros</h2>
 
-                  <span className="text-xs text-gray-500">
-                    {tasks.filter((task) => task.status === 'DONE').length}
-                  </span>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  {tasks
-                    .filter((task) => task.status === 'DONE')
-                    .map(renderTask)}
-                </div>
+                <button
+                  type="button"
+                  onClick={handleOpenCreateMemberModal}
+                  className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-950 transition hover:bg-gray-200"
+                >
+                  Adicionar membro
+                </button>
               </div>
-            </div>
-          </section>
+
+              {memberError && !showMemberModal && (
+                <p className="mt-4 text-sm text-red-400">{memberError}</p>
+              )}
+
+              {members.length === 0 ? (
+                <div className="mt-4 rounded-lg border border-gray-800 bg-gray-950 p-6">
+                  <p className="text-gray-400">
+                    Este projeto ainda não possui membros.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {members.map((member) => (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => handleOpenEditMemberModal(member)}
+                      className="flex w-full items-center justify-between rounded-lg border border-gray-800 bg-gray-950 p-4 text-left transition hover:border-gray-600 hover:bg-gray-800"
+                    >
+                      <div>
+                        <p className="font-medium">{member.user.name}</p>
+
+                        <p className="mt-1 text-sm text-gray-400">
+                          {member.user.email}
+                        </p>
+                      </div>
+
+                      <span className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-400">
+                        {member.role}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
         )}
       </div>
 
@@ -748,6 +924,149 @@ function ProjectDetails() {
                       : editingTaskId
                         ? 'Salvar alterações'
                         : 'Criar tarefa'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showMemberModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              handleCloseMemberModal()
+            }
+          }}
+        >
+          <div className="w-full max-w-lg rounded-lg border border-gray-800 bg-gray-900 p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">
+                {editingMemberId ? 'Editar membro' : 'Adicionar membro'}
+              </h2>
+
+              <button
+                type="button"
+                onClick={handleCloseMemberModal}
+                disabled={savingMember || !!deletingMemberId}
+                className="text-2xl leading-none text-gray-500 transition hover:text-white disabled:cursor-not-allowed"
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMember} className="mt-6 space-y-4">
+              {!editingMemberId && (
+                <div>
+                  <label
+                    htmlFor="member-user-id"
+                    className="mb-2 block text-sm font-medium text-gray-300"
+                  >
+                    ID do usuário
+                  </label>
+
+                  <input
+                    id="member-user-id"
+                    type="text"
+                    value={memberUserId}
+                    onChange={(event) => setMemberUserId(event.target.value)}
+                    placeholder="UUID do usuário"
+                    autoFocus
+                    disabled={savingMember || !!deletingMemberId}
+                    className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+
+                  <p className="mt-2 text-xs text-gray-500">
+                    Informe o ID do usuário que deseja adicionar ao projeto.
+                  </p>
+                </div>
+              )}
+
+              {editingMemberId && (
+                <div className="rounded-lg border border-gray-800 bg-gray-950 p-4">
+                  <p className="font-medium">
+                    {
+                      members.find((member) => member.id === editingMemberId)
+                        ?.user.name
+                    }
+                  </p>
+
+                  <p className="mt-1 text-sm text-gray-400">
+                    {
+                      members.find((member) => member.id === editingMemberId)
+                        ?.user.email
+                    }
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label
+                  htmlFor="member-role"
+                  className="mb-2 block text-sm font-medium text-gray-300"
+                >
+                  Role
+                </label>
+
+                <select
+                  id="member-role"
+                  value={memberRole}
+                  onChange={(event) =>
+                    setMemberRole(event.target.value as ProjectMemberRole)
+                  }
+                  disabled={savingMember || !!deletingMemberId}
+                  className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="MEMBER">MEMBER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </div>
+
+              {memberError && (
+                <p className="text-sm text-red-400">{memberError}</p>
+              )}
+
+              <div className="flex items-center justify-between gap-3">
+                {editingMemberId ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteMember(editingMemberId)}
+                    disabled={savingMember || !!deletingMemberId}
+                    className="rounded-lg border border-red-900 px-4 py-3 text-sm font-medium text-red-400 transition hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {deletingMemberId === editingMemberId
+                      ? 'Removendo...'
+                      : 'Remover membro'}
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCloseMemberModal}
+                    disabled={savingMember || !!deletingMemberId}
+                    className="rounded-lg border border-gray-700 px-4 py-3 text-sm font-medium transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={savingMember || !!deletingMemberId}
+                    className="rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-950 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {savingMember
+                      ? editingMemberId
+                        ? 'Salvando...'
+                        : 'Adicionando...'
+                      : editingMemberId
+                        ? 'Salvar alterações'
+                        : 'Adicionar membro'}
                   </button>
                 </div>
               </div>
