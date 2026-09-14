@@ -9,6 +9,18 @@ export type Project = {
   updatedAt: string
 }
 
+export type CreateProjectData = {
+  name: string
+  description?: string
+}
+
 export async function getProjects(): Promise<Project[]> {
   return api<Project[]>('/projects')
+}
+
+export async function createProject(data: CreateProjectData): Promise<Project> {
+  return api<Project>('/projects', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
 }

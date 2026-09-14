@@ -3,7 +3,11 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 import { api } from '../services/api'
 import { isAuthenticated, removeAccessToken } from '../services/auth.service'
-import { getProjects, type Project } from '../services/projects.service'
+import {
+  createProject,
+  getProjects,
+  type Project,
+} from '../services/projects.service'
 
 export const Route = createFileRoute('/dashboard')({
   component: Dashboard,
@@ -20,8 +24,12 @@ function Dashboard() {
 
   const [user, setUser] = useState<User | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
+  const [projectName, setProjectName] = useState('')
+  const [projectDescription, setProjectDescription] = useState('')
   const [error, setError] = useState('')
+  const [projectError, setProjectError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [creatingProject, setCreatingProject] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -51,6 +59,37 @@ function Dashboard() {
 
     loadDashboard()
   }, [navigate])
+
+  async function handleCreateProject(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    setProjectError('')
+
+    if (!projectName.trim()) {
+      setProjectError('Informe o nome do projeto.')
+      return
+    }
+
+    try {
+      setCreatingProject(true)
+
+      const project = await createProject({
+        name: projectName.trim(),
+        description: projectDescription.trim() || undefined,
+      })
+
+      setProjects((currentProjects) => [project, ...currentProjects])
+
+      setProjectName('')
+      setProjectDescription('')
+    } catch (error) {
+      setProjectError(
+        error instanceof Error ? error.message : 'Erro ao criar o projeto.',
+      )
+    } finally {
+      setCreatingProject(false)
+    }
+  }
 
   function handleLogout() {
     removeAccessToken()
@@ -108,6 +147,60 @@ function Dashboard() {
         </header>
 
         <section className="mt-8 rounded-lg border border-gray-800 bg-gray-900 p-6">
+          <h2 className="text-xl font-semibold">Novo projeto</h2>
+
+          <form onSubmit={handleCreateProject} className="mt-4 space-y-4">
+            <div>
+              <label
+                htmlFor="project-name"
+                className="mb-2 block text-sm font-medium text-gray-300"
+              >
+                Nome
+              </label>
+
+              <input
+                id="project-name"
+                type="text"
+                value={projectName}
+                onChange={(event) => setProjectName(event.target.value)}
+                placeholder="Nome do projeto"
+                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="project-description"
+                className="mb-2 block text-sm font-medium text-gray-300"
+              >
+                Descrição
+              </label>
+
+              <textarea
+                id="project-description"
+                value={projectDescription}
+                onChange={(event) => setProjectDescription(event.target.value)}
+                placeholder="Descrição do projeto"
+                rows={3}
+                className="w-full resize-none rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500"
+              />
+            </div>
+
+            {projectError && (
+              <p className="text-sm text-red-400">{projectError}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={creatingProject}
+              className="rounded-lg bg-white px-4 py-3 font-medium text-gray-950 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {creatingProject ? 'Criando...' : 'Criar projeto'}
+            </button>
+          </form>
+        </section>
+
+        <section className="mt-8 rounded-lg border border-gray-800 bg-gray-900 p-6">
           <h2 className="text-xl font-semibold">Seus dados</h2>
 
           <div className="mt-4 space-y-2 text-gray-300">
@@ -127,9 +220,7 @@ function Dashboard() {
         </section>
 
         <section className="mt-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Projetos</h2>
-          </div>
+          <h2 className="text-xl font-semibold">Projetos</h2>
 
           {projects.length === 0 ? (
             <div className="mt-4 rounded-lg border border-gray-800 bg-gray-900 p-6">
