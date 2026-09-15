@@ -1,3 +1,6 @@
+import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
+
 type ProjectHeaderProps = {
   project: {
     name: string
@@ -18,7 +21,7 @@ export function ProjectHeader({
   onDelete,
 }: ProjectHeaderProps) {
   return (
-    <section className="mt-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
+    <Card className="mt-6 p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">{project.name}</h1>
@@ -29,23 +32,23 @@ export function ProjectHeader({
         </div>
 
         <div className="flex gap-2">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onEdit}
             disabled={deleting}
-            className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Editar
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="danger"
             onClick={onDelete}
             disabled={deleting}
-            className="rounded-lg border border-red-900 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {deleting ? 'Excluindo...' : 'Excluir'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -61,6 +64,6 @@ export function ProjectHeader({
           {new Date(project.updatedAt).toLocaleDateString('pt-BR')}
         </p>
       </div>
-    </section>
+    </Card>
   )
 }

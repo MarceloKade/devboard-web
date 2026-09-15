@@ -1,3 +1,8 @@
+import { Button } from '../ui/Button'
+import { Input } from '../ui/Input'
+import { Label } from '../ui/Label'
+import { Textarea } from '../ui/Textarea'
+
 type ProjectFormProps = {
   projectName: string
   projectDescription: string
@@ -25,58 +30,42 @@ export function ProjectForm({
 
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <div>
-          <label
-            htmlFor="project-name"
-            className="mb-2 block text-sm font-medium text-gray-300"
-          >
-            Nome
-          </label>
+          <Label htmlFor="project-name">Nome</Label>
 
-          <input
+          <Input
             id="project-name"
             type="text"
             value={projectName}
             onChange={(event) => onNameChange(event.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500"
           />
         </div>
 
         <div>
-          <label
-            htmlFor="project-description"
-            className="mb-2 block text-sm font-medium text-gray-300"
-          >
-            Descrição
-          </label>
+          <Label htmlFor="project-description">Descrição</Label>
 
-          <textarea
+          <Textarea
             id="project-description"
             value={projectDescription}
             onChange={(event) => onDescriptionChange(event.target.value)}
             rows={4}
-            className="w-full resize-none rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500"
           />
         </div>
 
         {updateError && <p className="text-sm text-red-400">{updateError}</p>}
 
         <div className="flex justify-end gap-3">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onCancel}
             disabled={updating}
-            className="rounded-lg border border-gray-700 px-4 py-3 text-sm font-medium transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancelar
-          </button>
+          </Button>
 
-          <button
-            type="submit"
-            disabled={updating}
-            className="rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-950 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <Button type="submit" disabled={updating}>
             {updating ? 'Salvando...' : 'Salvar alterações'}
-          </button>
+          </Button>
         </div>
       </form>
     </section>

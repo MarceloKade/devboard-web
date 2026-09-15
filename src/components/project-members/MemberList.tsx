@@ -1,3 +1,6 @@
+import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
+
 import type { ProjectMember } from '../../services/project-members.service'
 
 type MemberListProps = {
@@ -14,17 +17,13 @@ export function MemberList({
   onEditMember,
 }: MemberListProps) {
   return (
-    <section className="mt-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
+    <section className="mt-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Membros</h2>
 
-        <button
-          type="button"
-          onClick={onAddMember}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-950 transition hover:bg-gray-200"
-        >
+        <Button type="button" onClick={onAddMember}>
           Adicionar membro
-        </button>
+        </Button>
       </div>
 
       {memberError && (
@@ -32,32 +31,33 @@ export function MemberList({
       )}
 
       {members.length === 0 ? (
-        <div className="mt-4 rounded-lg border border-gray-800 bg-gray-950 p-6">
+        <Card className="mt-4 bg-gray-950 p-6">
           <p className="text-gray-400">
             Este projeto ainda não possui membros.
           </p>
-        </div>
+        </Card>
       ) : (
         <div className="mt-4 space-y-3">
           {members.map((member) => (
-            <button
+            <Card
               key={member.id}
-              type="button"
               onClick={() => onEditMember(member)}
-              className="flex w-full items-center justify-between rounded-lg border border-gray-800 bg-gray-950 p-4 text-left transition hover:border-gray-600 hover:bg-gray-800"
+              className="cursor-pointer bg-gray-950 p-4 transition hover:border-gray-600 hover:bg-gray-800"
             >
-              <div>
-                <p className="font-medium">{member.user.name}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{member.user.name}</p>
 
-                <p className="mt-1 text-sm text-gray-400">
-                  {member.user.email}
-                </p>
+                  <p className="mt-1 text-sm text-gray-400">
+                    {member.user.email}
+                  </p>
+                </div>
+
+                <span className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-400">
+                  {member.role}
+                </span>
               </div>
-
-              <span className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-400">
-                {member.role}
-              </span>
-            </button>
+            </Card>
           ))}
         </div>
       )}
