@@ -9,6 +9,13 @@ import {
   type Project,
 } from '../services/projects.service'
 
+import { Button } from '../components/ui/Button'
+import { Card } from '../components/ui/Card'
+import { Input } from '../components/ui/Input'
+import { Label } from '../components/ui/Label'
+import { Modal } from '../components/ui/Modal'
+import { Textarea } from '../components/ui/Textarea'
+
 export const Route = createFileRoute('/dashboard')({
   component: Dashboard,
 })
@@ -128,13 +135,13 @@ function Dashboard() {
 
           <p className="mt-2 text-red-400">{error}</p>
 
-          <button
+          <Button
             type="button"
             onClick={() => navigate({ to: '/login' })}
-            className="mt-6 rounded-lg bg-white px-4 py-3 font-medium text-gray-950 transition hover:bg-gray-200"
+            className="mt-6"
           >
             Ir para o login
-          </button>
+          </Button>
         </div>
       </main>
     )
@@ -150,38 +157,30 @@ function Dashboard() {
             <p className="mt-2 text-gray-400">Bem-vindo, {user?.name}!</p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium transition hover:bg-gray-900"
-          >
+          <Button type="button" variant="secondary" onClick={handleLogout}>
             Sair
-          </button>
+          </Button>
         </header>
 
         <section className="mt-8">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Projetos</h2>
 
-            <button
-              type="button"
-              onClick={() => setShowProjectModal(true)}
-              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-950 transition hover:bg-gray-200"
-            >
+            <Button type="button" onClick={() => setShowProjectModal(true)}>
               Novo Projeto
-            </button>
+            </Button>
           </div>
 
           {projects.length === 0 ? (
-            <div className="mt-4 rounded-lg border border-gray-800 bg-gray-900 p-6">
+            <Card className="mt-4 bg-gray-950 p-6">
               <p className="text-gray-400">
                 Você ainda não possui nenhum projeto.
               </p>
-            </div>
+            </Card>
           ) : (
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {projects.map((project) => (
-                <article
+                <Card
                   key={project.id}
                   onClick={() =>
                     navigate({
@@ -189,7 +188,7 @@ function Dashboard() {
                       params: { id: project.id },
                     })
                   }
-                  className="cursor-pointer rounded-lg border border-gray-800 bg-gray-900 p-6 transition hover:border-gray-600 hover:bg-gray-800"
+                  className="cursor-pointer bg-gray-900 p-6 transition hover:border-gray-600 hover:bg-gray-800"
                 >
                   <h3 className="text-lg font-semibold">{project.name}</h3>
 
@@ -203,13 +202,13 @@ function Dashboard() {
                     Criado em{' '}
                     {new Date(project.createdAt).toLocaleDateString('pt-BR')}
                   </p>
-                </article>
+                </Card>
               ))}
             </div>
           )}
         </section>
 
-        <section className="mt-8 rounded-lg border border-gray-800 bg-gray-900 p-6">
+        <Card className="mt-8 p-6">
           <h2 className="text-xl font-semibold">Seus dados</h2>
 
           <div className="mt-4 space-y-2 text-gray-300">
@@ -226,98 +225,63 @@ function Dashboard() {
               <span className="font-medium text-white">ID:</span> {user?.id}
             </p>
           </div>
-        </section>
+        </Card>
       </div>
 
       {showProjectModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              handleCloseProjectModal()
-            }
-          }}
+        <Modal
+          title="Novo Projeto"
+          onClose={handleCloseProjectModal}
+          disabled={creatingProject}
         >
-          <div className="w-full max-w-lg rounded-lg border border-gray-800 bg-gray-900 p-6 shadow-xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Novo Projeto</h2>
+          <form onSubmit={handleCreateProject} className="space-y-4">
+            <div>
+              <Label htmlFor="project-name">Nome</Label>
 
-              <button
-                type="button"
-                onClick={handleCloseProjectModal}
+              <Input
+                id="project-name"
+                type="text"
+                value={projectName}
+                onChange={(event) => setProjectName(event.target.value)}
+                placeholder="Nome do projeto"
+                autoFocus
                 disabled={creatingProject}
-                className="text-2xl leading-none text-gray-500 transition hover:text-white disabled:cursor-not-allowed"
-                aria-label="Fechar"
-              >
-                ×
-              </button>
+              />
             </div>
 
-            <form onSubmit={handleCreateProject} className="mt-6 space-y-4">
-              <div>
-                <label
-                  htmlFor="project-name"
-                  className="mb-2 block text-sm font-medium text-gray-300"
-                >
-                  Nome
-                </label>
+            <div>
+              <Label htmlFor="project-description">Descrição</Label>
 
-                <input
-                  id="project-name"
-                  type="text"
-                  value={projectName}
-                  onChange={(event) => setProjectName(event.target.value)}
-                  placeholder="Nome do projeto"
-                  autoFocus
-                  className="w-full rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500"
-                />
-              </div>
+              <Textarea
+                id="project-description"
+                value={projectDescription}
+                onChange={(event) => setProjectDescription(event.target.value)}
+                placeholder="Descrição do projeto"
+                rows={4}
+                disabled={creatingProject}
+              />
+            </div>
 
-              <div>
-                <label
-                  htmlFor="project-description"
-                  className="mb-2 block text-sm font-medium text-gray-300"
-                >
-                  Descrição
-                </label>
+            {projectError && (
+              <p className="text-sm text-red-400">{projectError}</p>
+            )}
 
-                <textarea
-                  id="project-description"
-                  value={projectDescription}
-                  onChange={(event) =>
-                    setProjectDescription(event.target.value)
-                  }
-                  placeholder="Descrição do projeto"
-                  rows={4}
-                  className="w-full resize-none rounded-lg border border-gray-700 bg-gray-950 px-4 py-3 text-white outline-none transition focus:border-gray-500"
-                />
-              </div>
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleCloseProjectModal}
+                disabled={creatingProject}
+              >
+                Cancelar
+              </Button>
 
-              {projectError && (
-                <p className="text-sm text-red-400">{projectError}</p>
-              )}
-
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={handleCloseProjectModal}
-                  disabled={creatingProject}
-                  className="rounded-lg border border-gray-700 px-4 py-3 text-sm font-medium transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={creatingProject}
-                  className="rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-950 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {creatingProject ? 'Criando...' : 'Criar projeto'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+              <Button type="submit" disabled={creatingProject}>
+                {creatingProject ? 'Criando...' : 'Criar projeto'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
     </main>
   )

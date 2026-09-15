@@ -4,6 +4,10 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { api } from '../services/api'
 import { setAccessToken } from '../services/auth.service'
 
+import { Button } from '../components/ui/Button'
+import { Input } from '../components/ui/Input'
+import { Label } from '../components/ui/Label'
+
 export const Route = createFileRoute('/login')({
   component: Login,
 })
@@ -62,49 +66,38 @@ function Login() {
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium">
-              E-mail
-            </label>
+            <Label htmlFor="email">E-mail</Label>
 
-            <input
+            <Input
               id="email"
               name="email"
               type="email"
               placeholder="seu@email.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 outline-none transition placeholder:text-gray-600 focus:border-gray-400"
+              disabled={loading}
             />
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="mb-2 block text-sm font-medium"
-            >
-              Senha
-            </label>
+            <Label htmlFor="password">Senha</Label>
 
-            <input
+            <Input
               id="password"
               name="password"
               type="password"
               placeholder="Sua senha"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 outline-none transition placeholder:text-gray-600"
+              disabled={loading}
             />
           </div>
 
           {error && <p className="text-sm text-red-400">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-white px-4 py-3 font-medium text-gray-950 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <Button type="submit" disabled={loading} className="w-full">
             {loading ? 'Entrando...' : 'Entrar'}
-          </button>
+          </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-400">
