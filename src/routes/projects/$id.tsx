@@ -131,12 +131,12 @@ function ProjectDetails() {
         <MemberModal
           members={memberState.members}
           editingMemberId={memberState.editingMemberId}
-          memberUserId={memberState.memberUserId}
+          memberEmail={memberState.memberEmail}
           memberRole={memberState.memberRole}
           memberError={memberState.memberError}
           savingMember={memberState.savingMember}
           deletingMemberId={memberState.deletingMemberId}
-          onUserIdChange={memberState.setMemberUserId}
+          onEmailChange={memberState.setMemberEmail}
           onRoleChange={memberState.setMemberRole}
           onSubmit={memberState.handleSaveMember}
           onClose={memberState.handleCloseMemberModal}

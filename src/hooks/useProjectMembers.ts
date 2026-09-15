@@ -14,7 +14,7 @@ export function useProjectMembers(projectId: string) {
 
   const [showMemberModal, setShowMemberModal] = useState(false)
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
-  const [memberUserId, setMemberUserId] = useState('')
+  const [memberEmail, setMemberEmail] = useState('')
   const [memberRole, setMemberRole] = useState<ProjectMemberRole>('MEMBER')
   const [memberError, setMemberError] = useState('')
   const [savingMember, setSavingMember] = useState(false)
@@ -40,7 +40,7 @@ export function useProjectMembers(projectId: string) {
 
   function handleOpenCreateMemberModal() {
     setEditingMemberId(null)
-    setMemberUserId('')
+    setMemberEmail('')
     setMemberRole('MEMBER')
     setMemberError('')
     setShowMemberModal(true)
@@ -48,7 +48,7 @@ export function useProjectMembers(projectId: string) {
 
   function handleOpenEditMemberModal(member: ProjectMember) {
     setEditingMemberId(member.id)
-    setMemberUserId(member.userId)
+    setMemberEmail(member.user.email)
     setMemberRole(member.role)
     setMemberError('')
     setShowMemberModal(true)
@@ -61,7 +61,7 @@ export function useProjectMembers(projectId: string) {
 
     setShowMemberModal(false)
     setEditingMemberId(null)
-    setMemberUserId('')
+    setMemberEmail('')
     setMemberRole('MEMBER')
     setMemberError('')
   }
@@ -71,8 +71,8 @@ export function useProjectMembers(projectId: string) {
 
     setMemberError('')
 
-    if (!editingMemberId && !memberUserId.trim()) {
-      setMemberError('Informe o ID do usuário.')
+    if (!editingMemberId && !memberEmail.trim()) {
+      setMemberError('Informe o e-mail do usuário.')
       return
     }
 
@@ -95,7 +95,7 @@ export function useProjectMembers(projectId: string) {
         )
       } else {
         const member = await addProjectMember(projectId, {
-          userId: memberUserId.trim(),
+          email: memberEmail.trim(),
           role: memberRole,
         })
 
@@ -137,7 +137,7 @@ export function useProjectMembers(projectId: string) {
 
       setShowMemberModal(false)
       setEditingMemberId(null)
-      setMemberUserId('')
+      setMemberEmail('')
       setMemberRole('MEMBER')
     } catch (error) {
       setMemberError(
@@ -152,12 +152,12 @@ export function useProjectMembers(projectId: string) {
     members,
     showMemberModal,
     editingMemberId,
-    memberUserId,
+    memberEmail,
     memberRole,
     memberError,
     savingMember,
     deletingMemberId,
-    setMemberUserId,
+    setMemberEmail,
     setMemberRole,
     handleOpenCreateMemberModal,
     handleOpenEditMemberModal,

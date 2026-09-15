@@ -12,12 +12,12 @@ import type {
 type MemberModalProps = {
   members: ProjectMember[]
   editingMemberId: string | null
-  memberUserId: string
+  memberEmail: string
   memberRole: ProjectMemberRole
   memberError: string
   savingMember: boolean
   deletingMemberId: string | null
-  onUserIdChange: (value: string) => void
+  onEmailChange: (value: string) => void
   onRoleChange: (value: ProjectMemberRole) => void
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
   onClose: () => void
@@ -27,12 +27,12 @@ type MemberModalProps = {
 export function MemberModal({
   members,
   editingMemberId,
-  memberUserId,
+  memberEmail,
   memberRole,
   memberError,
   savingMember,
   deletingMemberId,
-  onUserIdChange,
+  onEmailChange,
   onRoleChange,
   onSubmit,
   onClose,
@@ -51,20 +51,20 @@ export function MemberModal({
       <form onSubmit={onSubmit} className="space-y-4">
         {!editingMemberId && (
           <div>
-            <Label htmlFor="member-user-id">ID do usuário</Label>
+            <Label htmlFor="member-email">E-mail</Label>
 
             <Input
-              id="member-user-id"
-              type="text"
-              value={memberUserId}
-              onChange={(event) => onUserIdChange(event.target.value)}
-              placeholder="UUID do usuário"
+              id="member-email"
+              type="email"
+              value={memberEmail}
+              onChange={(event) => onEmailChange(event.target.value)}
+              placeholder="usuario@email.com"
               autoFocus
               disabled={disabled}
             />
 
             <p className="mt-2 text-xs text-gray-500">
-              Informe o ID do usuário que deseja adicionar ao projeto.
+              Informe o e-mail do usuário que deseja adicionar ao projeto.
             </p>
           </div>
         )}

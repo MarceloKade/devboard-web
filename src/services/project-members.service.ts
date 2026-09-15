@@ -17,7 +17,7 @@ export type ProjectMember = {
 }
 
 export type AddProjectMemberData = {
-  userId: string
+  email: string
   role: ProjectMemberRole
 }
 
