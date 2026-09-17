@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useProject } from '../../hooks/useProject'
 import { useTasks } from '../../hooks/useTasks'
 import { useProjectMembers } from '../../hooks/useProjectMembers'
+import { useProjectActivities } from '../../hooks/useProjectActivities'
 
 import { ProjectHeader } from '../../components/projects/ProjectHeader'
 import { ProjectForm } from '../../components/projects/ProjectForm'
@@ -10,6 +11,7 @@ import { TaskBoard } from '../../components/tasks/TaskBoard'
 import { TaskModal } from '../../components/tasks/TaskModal'
 import { MemberList } from '../../components/project-members/MemberList'
 import { MemberModal } from '../../components/project-members/MemberModal'
+import { ActivityModal } from '../../components/project-activities/ActivityModal'
 
 export const Route = createFileRoute('/projects/$id')({
   component: ProjectDetails,
@@ -22,6 +24,7 @@ function ProjectDetails() {
   const projectState = useProject(id)
   const taskState = useTasks(id)
   const memberState = useProjectMembers(id)
+  const activityState = useProjectActivities(id)
 
   if (projectState.loading) {
     return (
@@ -86,6 +89,16 @@ function ProjectDetails() {
               onDelete={projectState.handleDeleteProject}
             />
 
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={activityState.handleOpenActivityModal}
+                className="text-sm text-gray-400 transition hover:text-white"
+              >
+                Ver atividades
+              </button>
+            </div>
+
             <TaskBoard
               tasks={taskState.tasks}
               draggingTaskId={taskState.draggingTaskId}
@@ -141,6 +154,15 @@ function ProjectDetails() {
           onSubmit={memberState.handleSaveMember}
           onClose={memberState.handleCloseMemberModal}
           onDelete={memberState.handleDeleteMember}
+        />
+      )}
+
+      {activityState.showActivityModal && (
+        <ActivityModal
+          activities={activityState.activities}
+          loadingActivities={activityState.loadingActivities}
+          activityError={activityState.activityError}
+          onClose={activityState.handleCloseActivityModal}
         />
       )}
     </main>

@@ -53,8 +53,6 @@ export function ProjectHeader({
       </div>
 
       <div className="mt-6 space-y-2 text-sm text-gray-500">
-        <p>ID: {project.id}</p>
-
         <p>
           Criado em {new Date(project.createdAt).toLocaleDateString('pt-BR')}
         </p>

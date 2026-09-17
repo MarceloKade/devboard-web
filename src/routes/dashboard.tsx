@@ -220,10 +220,6 @@ function Dashboard() {
               <span className="font-medium text-white">E-mail:</span>{' '}
               {user?.email}
             </p>
-
-            <p>
-              <span className="font-medium text-white">ID:</span> {user?.id}
-            </p>
           </div>
         </Card>
       </div>
