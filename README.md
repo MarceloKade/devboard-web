@@ -1,208 +1,133 @@
-Welcome to your new TanStack Start app!
+# DevBoard Web
 
-# Getting Started
+Frontend do **DevBoard**, uma aplicação para gerenciamento de projetos, tarefas e membros de equipe.
 
-To run this application:
+A aplicação foi desenvolvida com React e TanStack Start, consumindo a API REST do DevBoard.
+
+## Tecnologias
+
+- React
+- TypeScript
+- TanStack Start
+- TanStack Router
+- Tailwind CSS
+- Vite
+
+## Funcionalidades
+
+- Cadastro e login de usuários
+- Autenticação utilizando JWT
+- Dashboard com projetos
+- Criação, edição e exclusão de projetos
+- Visualização dos detalhes de um projeto
+- Gerenciamento de tarefas
+- Organização das tarefas por status
+- Drag and drop de tarefas
+- Controle de prioridade das tarefas
+- Gerenciamento de membros dos projetos
+- Alteração de roles dos membros
+- Histórico de atividades do projeto
+- Modais para criação e edição de dados
+- Interface responsiva
+
+## Estrutura do projeto
+
+```text
+src/
+├── components/
+│   ├── project-activities/
+│   ├── project-members/
+│   ├── projects/
+│   ├── tasks/
+│   └── ui/
+├── hooks/
+├── routes/
+├── services/
+├── app.tsx
+└── ...
+```
+
+### Organização
+
+- `components/` — componentes reutilizáveis da interface
+- `hooks/` — lógica e estado utilizados pelas páginas
+- `routes/` — páginas e rotas da aplicação
+- `services/` — comunicação com a API
+- `components/ui/` — componentes básicos reutilizáveis da interface
+
+## Requisitos
+
+Antes de executar o projeto, é necessário ter instalado:
+
+- Node.js 22+
+- Git
+
+## Instalação
+
+Clone o repositório:
+
+```bash
+git clone https://github.com/MarceloKade/devboard-web.git
+```
+
+Entre na pasta:
+
+```bash
+cd devboard-web
+```
+
+Instale as dependências:
 
 ```bash
 npm install
+```
+
+## Variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto:
+
+```env
+VITE_API_URL="http://localhost:3001"
+```
+
+Essa variável define a URL da API utilizada pelo frontend.
+
+## Executando a aplicação
+
+Para iniciar o servidor de desenvolvimento:
+
+```bash
 npm run dev
 ```
 
-# Building For Production
+A aplicação estará disponível em:
 
-To build this application for production:
-
-```bash
-npm run build
+```text
+http://localhost:3000
 ```
 
-## Styling
+A API precisa estar sendo executada separadamente para que as funcionalidades que dependem do backend funcionem corretamente
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+## API
 
-### Removing Tailwind CSS
+O frontend consome a API REST do DevBoard.
 
-If you prefer not to use Tailwind CSS:
+Repositório:
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
+https://github.com/MarceloKade/devboard-api
 
-## Linting & Formatting
+A API é responsável por:
 
+- autenticação;
+- usuários;
+- projetos;
+- tarefas;
+- membros;
+- histórico de atividades.
 
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
+## Autor
 
-```bash
-npm run lint
-npm run format
-npm run check
-```
+**Marcelo Kade**
 
-
-## Deploy with Nitro
-
-This project uses Nitro as a generic server adapter, so it can run on any Node-compatible host.
-
-```bash
-npm run build
-node dist/server/index.mjs
-```
-
-The build output is a self-contained Node server. To deploy, push the `dist/` directory to your host (Render, Fly.io, your own VPS, etc.) and run the server command above.
-
-For host-specific presets (Vercel, Netlify, Cloudflare, AWS Lambda, etc.) and tuning, see https://v3.nitro.build/deploy.
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+- GitHub: https://github.com/MarceloKade
+- LinkedIn: https://www.linkedin.com/in/marcelokade/
