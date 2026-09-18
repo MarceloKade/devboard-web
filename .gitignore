@@ -37,3 +37,5 @@ coverage
 # Temporary files
 __unconfig*
 todos.json
+# Local Netlify folder
+.netlify
