@@ -188,7 +188,9 @@ function Dashboard() {
                       params: { id: project.id },
                     })
                   }
-                  className="cursor-pointer bg-gray-900 p-6 transition hover:border-gray-600 hover:bg-gray-800"
+                  className={`cursor-pointer bg-gray-900 p-6 transition hover:border-gray-600 hover:bg-gray-800 ${
+                    projects.length === 1 ? 'sm:col-span-2' : ''
+                  }`}
                 >
                   <h3 className="text-lg font-semibold">{project.name}</h3>
 

@@ -13,7 +13,19 @@ import netlify from '@netlify/vite-plugin-tanstack-start'
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
 
-  plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact(), netlify()],
+  plugins: [
+    devtools(),
+    tailwindcss(),
+    tanstackStart(),
+    viteReact(),
+    netlify({
+      dev: {
+        edgeFunctions: {
+          enabled: false,
+        },
+      },
+    }),
+  ],
 })
 
 export default config
