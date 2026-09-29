@@ -8,6 +8,8 @@ type TaskBoardProps = {
   tasks: Task[]
   draggingTaskId: string | null
   taskError: string
+  currentUserId: string | undefined
+  isAdmin: boolean
   onOpenTask: (task: Task) => void
   onDragStart: (taskId: string) => void
   onDragEnd: () => void
@@ -37,6 +39,8 @@ export function TaskBoard({
   tasks,
   draggingTaskId,
   taskError,
+  currentUserId,
+  isAdmin,
   onOpenTask,
   onDragStart,
   onDragEnd,
@@ -77,16 +81,22 @@ export function TaskBoard({
               </div>
 
               <div className="mt-4 space-y-3">
-                {columnTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    dragging={draggingTaskId === task.id}
-                    onDragStart={() => onDragStart(task.id)}
-                    onDragEnd={onDragEnd}
-                    onClick={() => onOpenTask(task)}
-                  />
-                ))}
+                {columnTasks.map((task) => {
+                  const canEditTask =
+                    isAdmin || task.createdById === currentUserId
+
+                  return (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      dragging={draggingTaskId === task.id}
+                      disabled={!canEditTask}
+                      onDragStart={() => onDragStart(task.id)}
+                      onDragEnd={onDragEnd}
+                      onClick={() => onOpenTask(task)}
+                    />
+                  )
+                })}
               </div>
             </Card>
           )

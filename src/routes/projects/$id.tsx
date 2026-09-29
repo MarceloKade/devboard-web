@@ -4,6 +4,7 @@ import { useProject } from '../../hooks/useProject'
 import { useTasks } from '../../hooks/useTasks'
 import { useProjectMembers } from '../../hooks/useProjectMembers'
 import { useProjectActivities } from '../../hooks/useProjectActivities'
+import { useUsers } from '../../hooks/useUsers'
 
 import { ProjectHeader } from '../../components/projects/ProjectHeader'
 import { ProjectForm } from '../../components/projects/ProjectForm'
@@ -25,6 +26,7 @@ function ProjectDetails() {
   const taskState = useTasks(id)
   const memberState = useProjectMembers(id)
   const activityState = useProjectActivities(id)
+  const userState = useUsers()
 
   if (projectState.loading) {
     return (
@@ -57,6 +59,16 @@ function ProjectDetails() {
       </main>
     )
   }
+
+  const currentUserId = userState.user?.id
+
+  const isOwner = projectState.project.ownerId === currentUserId
+
+  const currentMember = memberState.members.find(
+    (member) => member.user.id === currentUserId,
+  )
+
+  const isAdmin = isOwner || currentMember?.role === 'ADMIN'
 
   return (
     <main className="min-h-screen bg-gray-950 px-6 py-10 text-white">
@@ -103,6 +115,8 @@ function ProjectDetails() {
               tasks={taskState.tasks}
               draggingTaskId={taskState.draggingTaskId}
               taskError={taskState.taskError}
+              currentUserId={currentUserId}
+              isAdmin={isAdmin}
               onOpenTask={taskState.handleOpenEditTaskModal}
               onDragStart={taskState.handleDragStart}
               onDragEnd={taskState.handleDragEnd}
@@ -113,6 +127,7 @@ function ProjectDetails() {
             <MemberList
               members={memberState.members}
               memberError={memberState.memberError}
+              canManageMembers={isAdmin}
               onAddMember={memberState.handleOpenCreateMemberModal}
               onEditMember={memberState.handleOpenEditMemberModal}
             />

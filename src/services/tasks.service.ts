@@ -11,11 +11,12 @@ export type Task = {
   status: TaskStatus
   priority: TaskPriority
   projectId: string
+  createdById: string
   createdAt: string
   updatedAt: string
   createdBy: {
     avatar: string | null
-  }
+  } | null
 }
 
 export type CreateTaskData = {

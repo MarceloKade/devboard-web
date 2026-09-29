@@ -5,6 +5,7 @@ import { Card } from '../ui/Card'
 type TaskCardProps = {
   task: Task
   dragging: boolean
+  disabled: boolean
   onDragStart: () => void
   onDragEnd: () => void
   onClick: () => void
@@ -13,26 +14,28 @@ type TaskCardProps = {
 export function TaskCard({
   task,
   dragging,
+  disabled,
   onDragStart,
   onDragEnd,
   onClick,
 }: TaskCardProps) {
   return (
     <Card
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onClick={onClick}
-      className={`cursor-grab bg-gray-900 p-4 transition hover:border-gray-600 hover:bg-gray-800 active:cursor-grabbing ${
-        dragging ? 'opacity-50' : ''
-      }`}
+      draggable={!disabled}
+      onDragStart={disabled ? undefined : onDragStart}
+      onDragEnd={disabled ? undefined : onDragEnd}
+      onClick={disabled ? undefined : onClick}
+      className={`bg-gray-900 p-4 transition ${
+        disabled
+          ? 'cursor-not-allowed opacity-50'
+          : 'cursor-grab hover:border-gray-600 hover:bg-gray-800 active:cursor-grabbing'
+      } ${dragging ? 'opacity-50' : ''}`}
     >
-      {' '}
       <div className="flex items-center justify-between gap-3">
-        {' '}
         <h4 className="font-semibold">{task.title}</h4>
+
         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
-          {task.createdBy.avatar ? (
+          {task.createdBy?.avatar ? (
             <img
               src={task.createdBy.avatar}
               alt="Avatar do criador"
@@ -45,13 +48,17 @@ export function TaskCard({
           )}
         </div>
       </div>
+
       {task.description && (
         <p className="mt-1 text-sm text-gray-400">{task.description}</p>
       )}
+
       <div className="mt-3 flex items-center justify-between">
         <span className="text-xs text-gray-500">{task.priority}</span>
 
-        <span className="text-xs text-gray-600">Clique para abrir</span>
+        <span className="text-xs text-gray-600">
+          {disabled ? 'Sem permissão' : 'Clique para abrir'}
+        </span>
       </div>
     </Card>
   )
