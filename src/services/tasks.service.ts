@@ -13,6 +13,9 @@ export type Task = {
   projectId: string
   createdAt: string
   updatedAt: string
+  createdBy: {
+    avatar: string | null
+  }
 }
 
 export type CreateTaskData = {

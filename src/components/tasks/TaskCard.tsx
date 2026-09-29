@@ -27,12 +27,27 @@ export function TaskCard({
         dragging ? 'opacity-50' : ''
       }`}
     >
-      <h4 className="font-semibold">{task.title}</h4>
-
+      {' '}
+      <div className="flex items-center justify-between gap-3">
+        {' '}
+        <h4 className="font-semibold">{task.title}</h4>
+        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
+          {task.createdBy.avatar ? (
+            <img
+              src={task.createdBy.avatar}
+              alt="Avatar do criador"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-400">
+              ?
+            </div>
+          )}
+        </div>
+      </div>
       {task.description && (
         <p className="mt-1 text-sm text-gray-400">{task.description}</p>
       )}
-
       <div className="mt-3 flex items-center justify-between">
         <span className="text-xs text-gray-500">{task.priority}</span>
 
