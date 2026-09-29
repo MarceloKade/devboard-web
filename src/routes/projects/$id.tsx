@@ -125,6 +125,7 @@ function ProjectDetails() {
             />
 
             <MemberList
+              owner={projectState.project.owner}
               members={memberState.members}
               memberError={memberState.memberError}
               canManageMembers={isAdmin}

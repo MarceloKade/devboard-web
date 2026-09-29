@@ -1,9 +1,11 @@
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 
+import type { Project } from '../../services/projects.service'
 import type { ProjectMember } from '../../services/project-members.service'
 
 type MemberListProps = {
+  owner: Project['owner']
   members: ProjectMember[]
   memberError: string
   canManageMembers: boolean
@@ -12,6 +14,7 @@ type MemberListProps = {
 }
 
 export function MemberList({
+  owner,
   members,
   memberError,
   canManageMembers,
@@ -36,59 +39,79 @@ export function MemberList({
         <p className="mt-4 text-sm text-red-400">{memberError}</p>
       )}
 
-      {members.length === 0 ? (
-        <Card className="mt-4 bg-gray-950 p-6">
-          <p className="text-gray-400">
-            Este projeto ainda não possui membros.
-          </p>
+      <div className="mt-4 space-y-3">
+        <Card className="bg-gray-950 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
+                {owner.avatar ? (
+                  <img
+                    src={owner.avatar}
+                    alt={`Avatar de ${owner.name}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-400">
+                    ?
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="font-medium">{owner.name}</p>
+
+                <p className="mt-1 text-sm text-gray-400">{owner.email}</p>
+              </div>
+            </div>
+
+            <span className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-400">
+              OWNER
+            </span>
+          </div>
         </Card>
-      ) : (
-        <div className="mt-4 space-y-3">
-          {members.map((member) => (
-            <Card
-              key={member.id}
-              onClick={
-                canManageMembers ? () => onEditMember(member) : undefined
-              }
-              className={`bg-gray-950 p-4 transition ${
-                canManageMembers
-                  ? 'cursor-pointer hover:border-gray-600 hover:bg-gray-800'
-                  : 'opacity-70'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
-                    {member.user.avatar ? (
-                      <img
-                        src={member.user.avatar}
-                        alt={`Avatar de ${member.user.name}`}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-400">
-                        ?
-                      </div>
-                    )}
-                  </div>
 
-                  <div>
-                    <p className="font-medium">{member.user.name}</p>
-
-                    <p className="mt-1 text-sm text-gray-400">
-                      {member.user.email}
-                    </p>
-                  </div>
+        {members.map((member) => (
+          <Card
+            key={member.id}
+            onClick={canManageMembers ? () => onEditMember(member) : undefined}
+            className={`bg-gray-950 p-4 transition ${
+              canManageMembers
+                ? 'cursor-pointer hover:border-gray-600 hover:bg-gray-800'
+                : 'opacity-70'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
+                  {member.user.avatar ? (
+                    <img
+                      src={member.user.avatar}
+                      alt={`Avatar de ${member.user.name}`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-400">
+                      ?
+                    </div>
+                  )}
                 </div>
 
-                <span className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-400">
-                  {member.role}
-                </span>
+                <div>
+                  <p className="font-medium">{member.user.name}</p>
+
+                  <p className="mt-1 text-sm text-gray-400">
+                    {member.user.email}
+                  </p>
+                </div>
               </div>
-            </Card>
-          ))}
-        </div>
-      )}
+
+              <span className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-400">
+                {member.role}
+              </span>
+            </div>
+          </Card>
+        ))}
+      </div>
     </section>
   )
 }

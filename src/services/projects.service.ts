@@ -5,6 +5,12 @@ export type Project = {
   name: string
   description: string | null
   ownerId: string
+  owner: {
+    id: string
+    name: string
+    email: string
+    avatar: string | null
+  }
   createdAt: string
   updatedAt: string
 }
