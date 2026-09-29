@@ -1,14 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
-import { api } from '../services/api'
-import { isAuthenticated, removeAccessToken } from '../services/auth.service'
-import {
-  createProject,
-  getProjects,
-  type Project,
-} from '../services/projects.service'
+import { useDashboard } from '../hooks/useDashboard'
+import { useUsers } from '../hooks/useUsers'
 
+import { AvatarModal } from '../components/avatar-modal/AvatarModal'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
@@ -20,102 +16,37 @@ export const Route = createFileRoute('/dashboard')({
   component: Dashboard,
 })
 
-type User = {
-  id: string
-  name: string
-  email: string
-}
-
 function Dashboard() {
   const navigate = useNavigate()
 
-  const [user, setUser] = useState<User | null>(null)
-  const [projects, setProjects] = useState<Project[]>([])
-  const [projectName, setProjectName] = useState('')
-  const [projectDescription, setProjectDescription] = useState('')
-  const [error, setError] = useState('')
-  const [projectError, setProjectError] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [creatingProject, setCreatingProject] = useState(false)
-  const [showProjectModal, setShowProjectModal] = useState(false)
+  const [showAvatarModal, setShowAvatarModal] = useState(false)
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate({ to: '/login' })
-      return
-    }
+  const {
+    projects,
+    projectName,
+    projectDescription,
+    projectError,
+    loading: projectsLoading,
+    creatingProject,
+    showProjectModal,
+    error: projectsError,
+    setProjectName,
+    setProjectDescription,
+    setShowProjectModal,
+    handleCreateProject,
+    handleCloseProjectModal,
+    handleLogout,
+  } = useDashboard()
 
-    async function loadDashboard() {
-      try {
-        const [userData, projectsData] = await Promise.all([
-          api<User>('/users/me'),
-          getProjects(),
-        ])
+  const {
+    user,
+    error: userError,
+    loading: userLoading,
+    handleAvatarChange,
+  } = useUsers()
 
-        setUser(userData)
-        setProjects(projectsData)
-      } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : 'Erro ao carregar o Dashboard.',
-        )
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadDashboard()
-  }, [navigate])
-
-  async function handleCreateProject(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    setProjectError('')
-
-    if (!projectName.trim()) {
-      setProjectError('Informe o nome do projeto.')
-      return
-    }
-
-    try {
-      setCreatingProject(true)
-
-      const project = await createProject({
-        name: projectName.trim(),
-        description: projectDescription.trim() || undefined,
-      })
-
-      setProjects((currentProjects) => [project, ...currentProjects])
-
-      setProjectName('')
-      setProjectDescription('')
-      setShowProjectModal(false)
-    } catch (error) {
-      setProjectError(
-        error instanceof Error ? error.message : 'Erro ao criar o projeto.',
-      )
-    } finally {
-      setCreatingProject(false)
-    }
-  }
-
-  function handleCloseProjectModal() {
-    if (creatingProject) {
-      return
-    }
-
-    setShowProjectModal(false)
-    setProjectError('')
-    setProjectName('')
-    setProjectDescription('')
-  }
-
-  function handleLogout() {
-    removeAccessToken()
-
-    navigate({ to: '/login' })
-  }
+  const loading = projectsLoading || userLoading
+  const error = projectsError || userError
 
   if (loading) {
     return (
@@ -151,10 +82,30 @@ function Dashboard() {
     <main className="min-h-screen bg-gray-950 px-6 py-10 text-white">
       <div className="mx-auto max-w-4xl">
         <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setShowAvatarModal(true)}
+              className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800"
+            >
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="Avatar"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-gray-400">
+                  ?
+                </div>
+              )}
+            </button>
 
-            <p className="mt-2 text-gray-400">Bem-vindo, {user?.name}!</p>
+            <div>
+              <p className="text-lg font-semibold">{user?.name}</p>
+
+              <p className="text-sm text-gray-400">{user?.email}</p>
+            </div>
           </div>
 
           <Button type="button" variant="secondary" onClick={handleLogout}>
@@ -209,21 +160,6 @@ function Dashboard() {
             </div>
           )}
         </section>
-
-        <Card className="mt-8 p-6">
-          <h2 className="text-xl font-semibold">Seus dados</h2>
-
-          <div className="mt-4 space-y-2 text-gray-300">
-            <p>
-              <span className="font-medium text-white">Nome:</span> {user?.name}
-            </p>
-
-            <p>
-              <span className="font-medium text-white">E-mail:</span>{' '}
-              {user?.email}
-            </p>
-          </div>
-        </Card>
       </div>
 
       {showProjectModal && (
@@ -280,6 +216,17 @@ function Dashboard() {
             </div>
           </form>
         </Modal>
+      )}
+
+      {showAvatarModal && (
+        <AvatarModal
+          currentAvatar={user?.avatar ?? null}
+          onConfirm={async (file) => {
+            await handleAvatarChange(file)
+            setShowAvatarModal(false)
+          }}
+          onClose={() => setShowAvatarModal(false)}
+        />
       )}
     </main>
   )
