@@ -37,18 +37,11 @@ function Home() {
 
           <div className="mt-10 flex gap-4">
             <Link
-              to="/login"
+              to="/register"
               className="rounded-lg bg-white px-6 py-3 font-medium text-gray-950 transition hover:bg-gray-200"
             >
               Começar agora
             </Link>
-
-            <a
-              href="#sobre"
-              className="rounded-lg border border-gray-700 px-6 py-3 font-medium text-gray-300 transition hover:bg-gray-900"
-            >
-              Conhecer
-            </a>
           </div>
         </section>
 
