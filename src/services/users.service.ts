@@ -9,8 +9,23 @@ export type User = {
   updatedAt: string
 }
 
+export type UpdateUserData = {
+  name?: string
+  email?: string
+}
+
 export async function getCurrentUser(): Promise<User> {
   return api<User>('/users/me')
+}
+
+export async function updateUser(
+  id: string,
+  data: UpdateUserData,
+): Promise<User> {
+  return api<User>(`/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
 }
 
 export async function uploadAvatar(file: File): Promise<User> {

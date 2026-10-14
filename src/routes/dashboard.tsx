@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 import { useDashboard } from '../hooks/useDashboard'
@@ -18,8 +17,6 @@ export const Route = createFileRoute('/dashboard')({
 
 function Dashboard() {
   const navigate = useNavigate()
-
-  const [showAvatarModal, setShowAvatarModal] = useState(false)
 
   const {
     projects,
@@ -43,6 +40,21 @@ function Dashboard() {
     error: userError,
     loading: userLoading,
     handleAvatarChange,
+
+    showUserModal,
+    userName,
+    userEmail,
+    userUpdateError,
+    updatingUser,
+    setUserName,
+    setUserEmail,
+    handleOpenUserModal,
+    handleCloseUserModal,
+    handleUpdateUser,
+
+    showAvatarModal,
+    handleOpenAvatarModal,
+    handleCloseAvatarModal,
   } = useUsers()
 
   const loading = projectsLoading || userLoading
@@ -83,11 +95,7 @@ function Dashboard() {
       <div className="mx-auto max-w-4xl">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setShowAvatarModal(true)}
-              className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800"
-            >
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
               {user?.avatar ? (
                 <img
                   src={user.avatar}
@@ -99,12 +107,20 @@ function Dashboard() {
                   ?
                 </div>
               )}
-            </button>
+            </div>
 
             <div>
               <p className="text-lg font-semibold">{user?.name}</p>
 
               <p className="text-sm text-gray-400">{user?.email}</p>
+
+              <button
+                type="button"
+                onClick={handleOpenUserModal}
+                className="mt-1 text-sm text-gray-500 transition hover:text-white"
+              >
+                Editar perfil
+              </button>
             </div>
           </div>
 
@@ -162,6 +178,95 @@ function Dashboard() {
         </section>
       </div>
 
+      {showUserModal && (
+        <Modal
+          title="Editar perfil"
+          onClose={handleCloseUserModal}
+          disabled={updatingUser}
+        >
+          <form onSubmit={handleUpdateUser} className="space-y-5">
+            <div className="flex flex-col items-center">
+              <div className="h-24 w-24 overflow-hidden rounded-full border border-gray-700 bg-gray-800">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-gray-400">
+                    ?
+                  </div>
+                )}
+              </div>
+
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleOpenAvatarModal}
+                disabled={updatingUser}
+                className="mt-3"
+              >
+                Alterar foto
+              </Button>
+            </div>
+
+            <div>
+              <Label htmlFor="user-name">Nome</Label>
+
+              <Input
+                id="user-name"
+                type="text"
+                value={userName}
+                onChange={(event) => setUserName(event.target.value)}
+                placeholder="Seu nome"
+                disabled={updatingUser}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="user-email">E-mail</Label>
+
+              <Input
+                id="user-email"
+                type="email"
+                value={userEmail}
+                onChange={(event) => setUserEmail(event.target.value)}
+                placeholder="Seu e-mail"
+                disabled={updatingUser}
+              />
+            </div>
+
+            {userUpdateError && (
+              <p className="text-sm text-red-400">{userUpdateError}</p>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleCloseUserModal}
+                disabled={updatingUser}
+              >
+                Cancelar
+              </Button>
+
+              <Button type="submit" disabled={updatingUser}>
+                {updatingUser ? 'Salvando...' : 'Salvar alterações'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {showAvatarModal && (
+        <AvatarModal
+          currentAvatar={user?.avatar ?? null}
+          onConfirm={handleAvatarChange}
+          onClose={handleCloseAvatarModal}
+        />
+      )}
+
       {showProjectModal && (
         <Modal
           title="Novo Projeto"
@@ -216,17 +321,6 @@ function Dashboard() {
             </div>
           </form>
         </Modal>
-      )}
-
-      {showAvatarModal && (
-        <AvatarModal
-          currentAvatar={user?.avatar ?? null}
-          onConfirm={async (file) => {
-            await handleAvatarChange(file)
-            setShowAvatarModal(false)
-          }}
-          onClose={() => setShowAvatarModal(false)}
-        />
       )}
     </main>
   )
